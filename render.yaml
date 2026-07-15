@@ -1,26 +1,25 @@
 # Render Blueprint — https://render.com/docs/blueprint-spec
 #
-# Deploys the uwb-peer-compass rendezvous backend as a Node web service that
-# auto-deploys on every push to `main`. The PostgreSQL connection is read from the
-# DATABASE_URL environment variable (already configured in the Render environment).
+# Deploys the uwb-peer-compass rendezvous backend from a Dockerfile so the build is
+# deterministic (this avoids the "exited with status 127" errors that happen when Render
+# strips devDependencies under NODE_ENV=production and `tsc`/`prisma` can't be found).
+# Auto-deploys on every push to `main`. PostgreSQL comes from DATABASE_URL.
 #
 # Public URL: https://findeme.onrender.com  (WebSocket: wss://findeme.onrender.com/ws)
 #
-# One-time setup: Render Dashboard ▸ New ▸ Blueprint ▸ point at this repo. Render reads
-# this file, creates the service, and redeploys automatically on each push to main.
+# Setup: Render Dashboard ▸ New ▸ Blueprint ▸ point at this repo. Render builds the
+# Docker image, runs `prisma migrate deploy`, then starts the server.
 
 services:
   - type: web
     name: findeme
-    runtime: node
+    runtime: docker
     plan: free
     branch: main
     autoDeploy: true
     rootDir: backend
-    # Build: install deps (incl. dev — needed to compile TS even under NODE_ENV=production),
-    # generate the Prisma client, apply migrations to the DB, compile.
-    buildCommand: npm install --include=dev && npx prisma generate && npx prisma migrate deploy && npm run build
-    startCommand: npm run start
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
     healthCheckPath: /health
     envVars:
       # Provided/managed by the Render environment (Postgres). Not synced from the repo.
@@ -31,7 +30,7 @@ services:
         generateValue: true
       - key: NODE_ENV
         value: production
-      # Render injects PORT automatically; the server already binds to it (config.ts).
+      # Render injects PORT automatically; the server binds to it (config.ts).
       - key: ACCESS_TOKEN_TTL
         value: "900"
       - key: REFRESH_TOKEN_TTL
