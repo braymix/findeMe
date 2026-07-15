@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- UWB ranging (API 31+). Feature-gated at runtime; NOT required so non-UWB
+         devices can still install and use the BLE/GPS fallback (ADR-0003). -->
+    <uses-permission android:name="android.permission.UWB_RANGING" />
+    <uses-feature android:name="android.hardware.uwb" android:required="false" />
+
+    <!-- BLE fallback (Android 12+ split permissions). ACCESS_FINE_LOCATION is still
+         required by some OEMs for BLE scanning and for the GPS last-resort mode. -->
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN"
+        android:usesPermissionFlags="neverForLocation" tools:targetApi="s" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADVERTISE" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <application
+        android:allowBackup="false"
+        android:label="UWB Peer Compass"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Material3.DayNight.NoActionBar"
+        xmlns:tools="http://schemas.android.com/tools">
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:label="UWB Peer Compass">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

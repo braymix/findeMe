@@ -28,12 +28,17 @@ Legend: ✅ done · 🚧 partial · ⬜ not started · 🔒 blocked (needs hardw
        (decline, timeout, disconnect, downgrade, no-common-tech)
 - ✅ Schema validated in backend test-suite (source of truth)
 
-## Phase 3 — Android
-- ⬜ Compose UI (login, peer list, session request/accept, compass)
-- ⬜ WS client
-- ⬜ `RangingProvider` (UWB / BLE / Mock)
-- ⬜ Sensor fusion (rotation vector)
-- ⬜ Unit tests (fusion + state machine + mock)
+## Phase 3 — Android ✅ (core: 24 tests passing; app: SDK-gated)
+- ✅ Compose UI (login, peer list w/ presence, incoming-invite consent dialog,
+       permission rationale, adaptive compass screen)
+- ✅ WS client (`RendezvousClient`, OkHttp) + Kotlin protocol models
+- ✅ `RangingProvider` abstraction + UWB (Jetpack) / BLE (RSSI) / Mock implementations
+- ✅ Sensor fusion (`CompassFusion` world-anchored, rotation-vector `AndroidHeadingSource`)
+- ✅ `DegradationPolicy` (runtime downgrade recommendation) + `SessionStateMachine` mirror
+- ✅ Unit tests in `core` (fusion, mock trajectories/noise/dropout, RSSI model,
+       degradation, state machine) — **built & green with system Gradle here**
+- 🔒 `./gradlew assembleDebug` requires the Android SDK (documented in docs/android-build.md);
+       GitHub Actions android job runs it. UWB paths marked `// VERIFY-ON-DEVICE`.
 
 ## Phase 4 — iOS
 - 🔒 SwiftUI UI + NISession + ARKit flag + RangingProvider (NI/BLE/Mock) + CoreMotion

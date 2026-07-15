@@ -10,14 +10,17 @@ coverage/
 # Prisma
 backend/prisma/*.db
 
-# Android
-android/.gradle/
+# Android / Gradle
+**/.gradle/
 android/build/
 android/app/build/
+android/core/build/
 android/local.properties
 android/.idea/
 *.iml
 .kotlin/
+# Keep the wrapper jar tracked even though *.jar might be ignored elsewhere
+!gradle/wrapper/gradle-wrapper.jar
 
 # iOS / Xcode
 ios/build/
