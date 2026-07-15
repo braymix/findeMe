@@ -1,0 +1,191 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://uwb-peer-compass/shared/messages.schema.json",
+  "title": "uwb-peer-compass wire messages",
+  "description": "All WebSocket messages. Every message has integer major version `v` and a `type`.",
+  "definitions": {
+    "technology": { "enum": ["UWB", "BLE", "GPS"] },
+    "platform": { "enum": ["ios", "android"] },
+    "role": { "enum": ["controller", "controlee"] },
+    "sessionState": {
+      "enum": ["INVITED", "ACCEPTED", "NEGOTIATED", "ACTIVE", "ENDED", "DECLINED", "EXPIRED", "FAILED"]
+    },
+    "endReason": {
+      "enum": ["peer-ended", "declined", "expired", "peer-disconnected", "no-common-technology", "ranging-failed"]
+    },
+    "capabilities": {
+      "type": "object",
+      "required": ["uwb", "ble", "gps"],
+      "properties": {
+        "uwb": { "type": "boolean" },
+        "ble": { "type": "boolean" },
+        "gps": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "rangingPayload": {
+      "type": "object",
+      "description": "Opaque, client-only. Server relays verbatim and never inspects it.",
+      "required": ["technology", "blob"],
+      "properties": {
+        "technology": { "$ref": "#/definitions/technology" },
+        "blob": { "type": "string", "description": "base64 discovery token / session params" }
+      },
+      "additionalProperties": true
+    },
+
+    "msg_presence_hello": {
+      "type": "object", "additionalProperties": false,
+      "required": ["v", "type", "protocolVersion", "platform", "capabilities"],
+      "properties": {
+        "v": { "const": 1 }, "type": { "const": "presence.hello" },
+        "protocolVersion": { "type": "string" },
+        "platform": { "$ref": "#/definitions/platform" },
+        "capabilities": { "$ref": "#/definitions/capabilities" }
+      }
+    },
+    "msg_presence_heartbeat": {
+      "type": "object", "additionalProperties": false,
+      "required": ["v", "type"],
+      "properties": { "v": { "const": 1 }, "type": { "const": "presence.heartbeat" } }
+    },
+    "msg_session_invite": {
+      "type": "object", "additionalProperties": false,
+      "required": ["v", "type", "peerId"],
+      "properties": { "v": { "const": 1 }, "type": { "const": "session.invite" }, "peerId": { "type": "string" } }
+    },
+    "msg_session_accept": {
+      "type": "object", "additionalProperties": false,
+      "required": ["v", "type", "sessionId"],
+      "properties": { "v": { "const": 1 }, "type": { "const": "session.accept" }, "sessionId": { "type": "string" } }
+    },
+    "msg_session_decline": {
+      "type": "object", "additionalProperties": false,
+      "required": ["v", "type", "sessionId"],
+      "properties": { "v": { "const": 1 }, "type": { "const": "session.decline" }, "sessionId": { "type": "string" } }
+    },
+    "msg_session_end": {
+      "type": "object", "additionalProperties": false,
+      "required": ["v", "type", "sessionId"],
+      "properties": { "v": { "const": 1 }, "type": { "const": "session.end" }, "sessionId": { "type": "string" } }
+    },
+    "msg_ranging_ready": {
+      "type": "object", "additionalProperties": false,
+      "required": ["v", "type", "sessionId", "rangingPayload"],
+      "properties": {
+        "v": { "const": 1 }, "type": { "const": "ranging.ready" },
+        "sessionId": { "type": "string" },
+        "rangingPayload": { "$ref": "#/definitions/rangingPayload" }
+      }
+    },
+    "msg_technology_report": {
+      "type": "object", "additionalProperties": false,
+      "required": ["v", "type", "sessionId", "technology", "reason"],
+      "properties": {
+        "v": { "const": 1 }, "type": { "const": "technology.report" },
+        "sessionId": { "type": "string" },
+        "technology": { "$ref": "#/definitions/technology" },
+        "reason": { "type": "string" }
+      }
+    },
+
+    "msg_presence_update": {
+      "type": "object", "additionalProperties": false,
+      "required": ["v", "type", "peerId", "online"],
+      "properties": {
+        "v": { "const": 1 }, "type": { "const": "presence.update" },
+        "peerId": { "type": "string" }, "online": { "type": "boolean" }
+      }
+    },
+    "msg_session_state": {
+      "type": "object", "additionalProperties": false,
+      "required": ["v", "type", "sessionId", "state"],
+      "properties": {
+        "v": { "const": 1 }, "type": { "const": "session.state" },
+        "sessionId": { "type": "string" }, "state": { "$ref": "#/definitions/sessionState" }
+      }
+    },
+    "msg_session_incoming": {
+      "type": "object", "additionalProperties": false,
+      "required": ["v", "type", "sessionId", "from"],
+      "properties": {
+        "v": { "const": 1 }, "type": { "const": "session.incoming" },
+        "sessionId": { "type": "string" },
+        "from": {
+          "type": "object", "additionalProperties": false,
+          "required": ["id", "username"],
+          "properties": { "id": { "type": "string" }, "username": { "type": "string" } }
+        }
+      }
+    },
+    "msg_session_negotiated": {
+      "type": "object", "additionalProperties": false,
+      "required": ["v", "type", "sessionId", "technology", "role"],
+      "properties": {
+        "v": { "const": 1 }, "type": { "const": "session.negotiated" },
+        "sessionId": { "type": "string" },
+        "technology": { "$ref": "#/definitions/technology" },
+        "role": { "$ref": "#/definitions/role" }
+      }
+    },
+    "msg_ranging_peerPayload": {
+      "type": "object", "additionalProperties": false,
+      "required": ["v", "type", "sessionId", "rangingPayload"],
+      "properties": {
+        "v": { "const": 1 }, "type": { "const": "ranging.peerPayload" },
+        "sessionId": { "type": "string" },
+        "rangingPayload": { "$ref": "#/definitions/rangingPayload" }
+      }
+    },
+    "msg_technology_downgrade": {
+      "type": "object", "additionalProperties": false,
+      "required": ["v", "type", "sessionId", "technology"],
+      "properties": {
+        "v": { "const": 1 }, "type": { "const": "technology.downgrade" },
+        "sessionId": { "type": "string" },
+        "technology": { "$ref": "#/definitions/technology" }
+      }
+    },
+    "msg_session_ended": {
+      "type": "object", "additionalProperties": false,
+      "required": ["v", "type", "sessionId", "reason"],
+      "properties": {
+        "v": { "const": 1 }, "type": { "const": "session.ended" },
+        "sessionId": { "type": "string" }, "reason": { "$ref": "#/definitions/endReason" }
+      }
+    },
+    "msg_error": {
+      "type": "object", "additionalProperties": false,
+      "required": ["v", "type", "code", "message"],
+      "properties": {
+        "v": { "const": 1 }, "type": { "const": "error" },
+        "code": { "type": "string" }, "message": { "type": "string" },
+        "sessionId": { "type": "string" }
+      }
+    }
+  },
+  "type": "object",
+  "required": ["v", "type"],
+  "properties": {
+    "v": { "const": 1 },
+    "type": { "type": "string" }
+  },
+  "oneOf": [
+    { "$ref": "#/definitions/msg_presence_hello" },
+    { "$ref": "#/definitions/msg_presence_heartbeat" },
+    { "$ref": "#/definitions/msg_session_invite" },
+    { "$ref": "#/definitions/msg_session_accept" },
+    { "$ref": "#/definitions/msg_session_decline" },
+    { "$ref": "#/definitions/msg_session_end" },
+    { "$ref": "#/definitions/msg_ranging_ready" },
+    { "$ref": "#/definitions/msg_technology_report" },
+    { "$ref": "#/definitions/msg_presence_update" },
+    { "$ref": "#/definitions/msg_session_state" },
+    { "$ref": "#/definitions/msg_session_incoming" },
+    { "$ref": "#/definitions/msg_session_negotiated" },
+    { "$ref": "#/definitions/msg_ranging_peerPayload" },
+    { "$ref": "#/definitions/msg_technology_downgrade" },
+    { "$ref": "#/definitions/msg_session_ended" },
+    { "$ref": "#/definitions/msg_error" }
+  ]
+}
