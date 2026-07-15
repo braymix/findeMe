@@ -53,11 +53,17 @@ Legend: ✅ done · 🚧 partial · ⬜ not started · 🔒 blocked (needs hardw
 - 🔒 Cannot compile here (no Swift toolchain / Xcode). Steps in docs/ios-build.md;
        UWB paths marked VERIFY-ON-DEVICE. GitHub Actions ios job runs swift build on macOS.
 
-## Phase 5 — Fallback & degradation
-- ⬜ Client+server technology selection, runtime downgrade, adaptive UI, quality indicators
-- ⬜ Degradation scenario tests (mock)
+## Phase 5 — Fallback & degradation ✅
+- ✅ Server technology selection (`negotiate`) + legal runtime downgrade (`isLegalDowngrade`)
+- ✅ Client selection + downgrade recommendation (`DegradationPolicy`, both platforms)
+- ✅ Adaptive UI (arrow vs proximity ring) + quality indicators (both platforms)
+- ✅ Degradation scenario tests with the mock (Android core + iOS core + backend integration)
 
-## Phase 6 — Hardening
-- ⬜ Rate limiting, token expiry
-- ⬜ `docs/security.md`, `docs/privacy.md`, `docs/device-testing.md`
-- ⬜ `docs/HANDOFF.md`
+## Phase 6 — Hardening ✅
+- ✅ Auth rate limiting (fixed-window per-IP) + tested
+- ✅ Token expiry + refresh rotation/revocation (Phase 1) 
+- ✅ `docs/security.md` (threat model, controls, residual risks)
+- ✅ `docs/privacy.md` (GDPR: lawful basis, zero measurement retention, consent)
+- ✅ `docs/device-testing.md` (device matrix + manual checklist + VERIFY-ON-DEVICE list)
+- ✅ `docs/HANDOFF.md` (status, run steps, hardware requirements, next steps)
+- ✅ OpenAPI spec generated (`backend/openapi.json`)
