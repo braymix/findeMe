@@ -1,0 +1,50 @@
+// Prisma schema for the rendezvous backend.
+// NOTE (privacy-by-design, ADR-0002): NO table stores any distance, direction, or
+// position. Sessions are ephemeral and live in server memory only; nothing about a
+// ranging session is persisted here.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  username     String   @unique
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+
+  // Contacts I have added (owner side).
+  contacts        Contact[] @relation("owner")
+  contactedBy     Contact[] @relation("contact")
+  refreshTokens   RefreshToken[]
+}
+
+model Contact {
+  id        String   @id @default(uuid())
+  owner     User     @relation("owner", fields: [ownerId], references: [id], onDelete: Cascade)
+  ownerId   String
+  contact   User     @relation("contact", fields: [contactId], references: [id], onDelete: Cascade)
+  contactId String
+  createdAt DateTime @default(now())
+
+  @@unique([ownerId, contactId])
+  @@index([contactId])
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  tokenHash String   @unique // SHA-256 of the opaque refresh token; never stored raw.
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}

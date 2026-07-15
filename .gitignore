@@ -1,0 +1,31 @@
+# Node
+node_modules/
+dist/
+build/
+coverage/
+*.log
+.env
+.env.local
+
+# Prisma
+backend/prisma/*.db
+
+# Android
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/.idea/
+*.iml
+.kotlin/
+
+# iOS / Xcode
+ios/build/
+ios/DerivedData/
+ios/*.xcodeproj/xcuserdata/
+ios/*.xcworkspace/xcuserdata/
+.DS_Store
+
+# Editors
+.vscode/
+*.swp
