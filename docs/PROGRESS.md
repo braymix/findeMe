@@ -40,9 +40,18 @@ Legend: ✅ done · 🚧 partial · ⬜ not started · 🔒 blocked (needs hardw
 - 🔒 `./gradlew assembleDebug` requires the Android SDK (documented in docs/android-build.md);
        GitHub Actions android job runs it. UWB paths marked `// VERIFY-ON-DEVICE`.
 
-## Phase 4 — iOS
-- 🔒 SwiftUI UI + NISession + ARKit flag + RangingProvider (NI/BLE/Mock) + CoreMotion
-- 🔒 Unit tests on mock (build requires macOS)
+## Phase 4 — iOS ✅ (code + tests written; build requires macOS/Swift)
+- ✅ `UWBCompassCore` SwiftPM package: RangingProvider, MockRangingProvider (AsyncStream,
+       deterministic SplitMix64 PRNG, dropout windows), CompassFusion, DegradationPolicy,
+       SessionStateMachine, BleDistanceModel — exact mirror of android/core.
+- ✅ XCTest suite mirroring the Android tests (fusion, mock, RSSI, degradation, state machine).
+- ✅ SwiftUI app: LoginView, PeerListView (presence + incoming-invite consent alert),
+       adaptive CompassView (precise arrow for UWB, hot/cold ring for BLE/GPS).
+- ✅ NIRangingProvider (NearbyInteraction, ARKit EDM flag), BleRangingProvider (CoreBluetooth),
+       HeadingSource (CoreLocation), RendezvousClient (URLSessionWebSocketTask).
+- ✅ Info.plist with NSNearbyInteraction / Bluetooth / Location usage strings; SwiftLint config.
+- 🔒 Cannot compile here (no Swift toolchain / Xcode). Steps in docs/ios-build.md;
+       UWB paths marked VERIFY-ON-DEVICE. GitHub Actions ios job runs swift build on macOS.
 
 ## Phase 5 — Fallback & degradation
 - ⬜ Client+server technology selection, runtime downgrade, adaptive UI, quality indicators

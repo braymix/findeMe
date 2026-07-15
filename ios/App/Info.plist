@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- Shown before the OS Nearby Interaction prompt (requirement: clear UX). -->
+    <key>NSNearbyInteractionUsageDescription</key>
+    <string>Used to measure the precise direction and distance to your peer. This never leaves your device.</string>
+    <key>NSNearbyInteractionAllowOnceUsageDescription</key>
+    <string>Used to point you toward your peer for this session only.</string>
+
+    <!-- Bluetooth fallback proximity. -->
+    <key>NSBluetoothAlwaysUsageDescription</key>
+    <string>Used as a fallback to estimate how close your peer is when precise UWB isn't available on both phones.</string>
+
+    <!-- Location: heading (compass) + GPS last-resort fallback. -->
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>Used for the compass heading and, outdoors, as a last-resort way to point toward your peer. Your location is never sent to our servers.</string>
+
+    <key>UIApplicationSceneManifest</key>
+    <dict>
+        <key>UIApplicationSupportsMultipleScenes</key>
+        <false/>
+    </dict>
+</dict>
+</plist>
