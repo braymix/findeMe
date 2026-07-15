@@ -26,7 +26,8 @@ binary (git is the wrong place for build outputs); instead every release publish
 ### Option B — build it yourself
 ```bash
 cd ../../android
-./gradlew :app:assembleRelease
+# Needs the Android SDK + Gradle 8.9 installed (no wrapper jar is committed).
+gradle :app:assembleRelease
 # -> app/build/outputs/apk/release/app-release.apk
 ```
 

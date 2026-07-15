@@ -31,11 +31,13 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
       - name: Build release APK (points at findeme.onrender.com)
         working-directory: android
-        run: |
-          chmod +x ./gradlew || true
-          ./gradlew :app:assembleRelease --no-daemon
+        run: gradle :app:assembleRelease --no-daemon
         env:
           # Provide these repo secrets to sign with your own key; otherwise CI falls back
           # to the debug key, still producing an installable test APK.

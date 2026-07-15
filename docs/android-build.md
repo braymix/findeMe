@@ -24,11 +24,11 @@ trajectories/noise/dropout, RSSI→distance, degradation policy, client state ma
 ## Building the full app (requires Android SDK)
 
 ```bash
-# Set ANDROID_HOME / sdk.dir first (Android SDK 34, build-tools).
+# Set ANDROID_HOME / sdk.dir first (Android SDK 34, build-tools) and install Gradle 8.9.
 cd android
-./gradlew assembleDebug        # build the APK
-./gradlew testDebugUnitTest    # app-module unit tests
-./gradlew ktlintCheck detekt   # lint
+gradle assembleDebug        # build the APK
+gradle testDebugUnitTest    # app-module unit tests
+gradle ktlintCheck detekt   # lint
 ```
 
 > **Why it can't build in this environment:** there is no Android SDK installed on the CI
@@ -37,10 +37,11 @@ cd android
 > configuration time. The GitHub Actions `android` job runs these commands with the SDK
 > available.
 
-> **Gradle wrapper note:** `gradle/wrapper/gradle-wrapper.jar` is committed, but this
-> sandbox blocks `services.gradle.org`, so `./gradlew` cannot download the distribution
-> here. On a networked machine `./gradlew` works normally, or run `gradle wrapper` once to
-> refresh it. Locally we verified `core` with the system Gradle (8.14.3).
+> **Gradle note:** no `gradle-wrapper.jar` is committed (the sandbox can't fetch a valid
+> one from `services.gradle.org`). CI provisions Gradle 8.9 via `gradle/actions/setup-gradle`
+> and calls `gradle` directly; do the same locally (`sdkman install gradle 8.9`, or your
+> package manager). `core` was verified here with the system Gradle (8.14.3). To regenerate
+> a wrapper for your own use, run `gradle wrapper --gradle-version 8.9` on a networked machine.
 
 ## VERIFY-ON-DEVICE markers
 

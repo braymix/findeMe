@@ -41,15 +41,16 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - name: Grant gradlew
-        working-directory: android
-        run: chmod +x ./gradlew || true
+      - uses: android-actions/setup-android@v3
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
       - name: Ktlint + Detekt
         working-directory: android
-        run: ./gradlew ktlintCheck detekt --no-daemon || true
+        run: gradle ktlintCheck detekt --no-daemon || true
       - name: Assemble + unit tests
         working-directory: android
-        run: ./gradlew assembleDebug testDebugUnitTest --no-daemon
+        run: gradle assembleDebug testDebugUnitTest --no-daemon
 
   ios:
     name: iOS (lint + build, macOS)

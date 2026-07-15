@@ -62,9 +62,10 @@ OpenAPI is served at `http://localhost:3000/docs` and written to
 
 ```bash
 cd android
-./gradlew assembleDebug       # build
-./gradlew testDebugUnitTest   # unit tests (fusion + state machine + mock provider)
-./gradlew ktlintCheck detekt  # lint
+# Requires the Android SDK + Gradle 8.9 (no wrapper jar is committed; CI provisions Gradle).
+gradle assembleDebug       # build
+gradle testDebugUnitTest   # unit tests (fusion + state machine + mock provider)
+gradle ktlintCheck detekt  # lint
 ```
 
 ### iOS
