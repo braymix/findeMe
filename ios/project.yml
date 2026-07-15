@@ -1,0 +1,34 @@
+# XcodeGen spec (https://github.com/yonaskolb/XcodeGen).
+# Generates UWBPeerCompass.xcodeproj from the sources in App/ + the UWBCompassCore package,
+# so the app can be built/archived reproducibly (locally and in CI) without committing the
+# noisy .xcodeproj. Run: `brew install xcodegen && xcodegen generate` inside ios/.
+name: UWBPeerCompass
+options:
+  bundleIdPrefix: com.uwbcompass
+  deploymentTarget:
+    iOS: "16.0"
+packages:
+  UWBCompassCore:
+    path: .
+targets:
+  UWBPeerCompass:
+    type: application
+    platform: iOS
+    sources:
+      - App
+    info:
+      path: App/Info.plist
+      properties:
+        CFBundleDisplayName: UWB Peer Compass
+        UILaunchScreen: {}
+    dependencies:
+      - package: UWBCompassCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.uwbcompass.app
+        MARKETING_VERSION: "1.0.0"
+        CURRENT_PROJECT_VERSION: "1"
+        TARGETED_DEVICE_FAMILY: "1"
+        SWIFT_VERSION: "5.9"
+        GENERATE_INFOPLIST_FILE: NO
+        # Nearby Interaction capability is enabled via the entitlement below on device.

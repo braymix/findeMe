@@ -1,0 +1,40 @@
+# Render Blueprint — https://render.com/docs/blueprint-spec
+#
+# Deploys the uwb-peer-compass rendezvous backend as a Node web service that
+# auto-deploys on every push to `main`. The PostgreSQL connection is read from the
+# DATABASE_URL environment variable (already configured in the Render environment).
+#
+# Public URL: https://findeme.onrender.com  (WebSocket: wss://findeme.onrender.com/ws)
+#
+# One-time setup: Render Dashboard ▸ New ▸ Blueprint ▸ point at this repo. Render reads
+# this file, creates the service, and redeploys automatically on each push to main.
+
+services:
+  - type: web
+    name: findeme
+    runtime: node
+    plan: free
+    branch: main
+    autoDeploy: true
+    rootDir: backend
+    # Build: install deps (incl. dev — needed to compile TS even under NODE_ENV=production),
+    # generate the Prisma client, apply migrations to the DB, compile.
+    buildCommand: npm install --include=dev && npx prisma generate && npx prisma migrate deploy && npm run build
+    startCommand: npm run start
+    healthCheckPath: /health
+    envVars:
+      # Provided/managed by the Render environment (Postgres). Not synced from the repo.
+      - key: DATABASE_URL
+        sync: false
+      # Secret for signing JWTs. Render generates a strong value on first deploy.
+      - key: JWT_SECRET
+        generateValue: true
+      - key: NODE_ENV
+        value: production
+      # Render injects PORT automatically; the server already binds to it (config.ts).
+      - key: ACCESS_TOKEN_TTL
+        value: "900"
+      - key: REFRESH_TOKEN_TTL
+        value: "604800"
+      - key: RATE_LIMIT_AUTH_PER_MIN
+        value: "20"

@@ -29,6 +29,13 @@ ios/*.xcodeproj/xcuserdata/
 ios/*.xcworkspace/xcuserdata/
 .DS_Store
 
+# Downloaded / built app binaries (produced by CI, fetched by download scripts)
+downloads/android/*.apk
+downloads/ios/*.ipa
+
+# Generated Xcode project (from ios/project.yml via XcodeGen)
+ios/*.xcodeproj
+
 # Editors
 .vscode/
 *.swp

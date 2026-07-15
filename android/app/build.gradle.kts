@@ -16,9 +16,9 @@ android {
         targetSdk = 34
         versionCode = 1
         versionName = "1.0.0"
-        // Backend base URL; override per build type / flavor as needed.
-        buildConfigField("String", "BACKEND_HTTP", "\"http://10.0.2.2:3000\"")
-        buildConfigField("String", "BACKEND_WS", "\"ws://10.0.2.2:3000/ws\"")
+        // Production backend on Render (used by the downloadable release APK).
+        buildConfigField("String", "BACKEND_HTTP", "\"https://findeme.onrender.com\"")
+        buildConfigField("String", "BACKEND_WS", "\"wss://findeme.onrender.com/ws\"")
         // Group mode is stubbed behind this flag (requirement 6 — scaffolding only).
         buildConfigField("boolean", "FEATURE_GROUP_MODE", "false")
     }
@@ -37,9 +37,35 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
+    signingConfigs {
+        create("release") {
+            // Real signing when a keystore is supplied via env (CI secrets); see
+            // .github/workflows/release.yml. Otherwise the release build falls back to the
+            // debug key below so CI still produces an INSTALLABLE test APK.
+            val ksPath = System.getenv("KEYSTORE_PATH")
+            if (ksPath != null) {
+                storeFile = file(ksPath)
+                storePassword = System.getenv("KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("KEY_ALIAS")
+                keyPassword = System.getenv("KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
+            // Ships pointing at https://findeme.onrender.com (from defaultConfig).
+            signingConfig = if (System.getenv("KEYSTORE_PATH") != null) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
+        }
+        debug {
+            // Local dev: Android emulator reaches the host machine at 10.0.2.2.
+            buildConfigField("String", "BACKEND_HTTP", "\"http://10.0.2.2:3000\"")
+            buildConfigField("String", "BACKEND_WS", "\"ws://10.0.2.2:3000/ws\"")
         }
     }
 }

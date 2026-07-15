@@ -31,6 +31,15 @@ distance, direction, or position data. Ranging happens directly device-to-device
   and listed in `docs/device-testing.md`.
 - **Zero retention** of any measurement on the backend. Session tokens are ephemeral.
 
+## Deployment & downloads
+
+- **Backend** auto-deploys to Render from `main` — live at **https://findeme.onrender.com**
+  (WebSocket `wss://findeme.onrender.com/ws`). See [`docs/deploy.md`](docs/deploy.md).
+- **Android app** (points at the Render backend): [`downloads/android/`](downloads/android/).
+- **iOS app** (TestFlight / device install): [`downloads/ios/`](downloads/ios/).
+
+Push a tag `vX.Y.Z` from `main` to build the mobile apps via the `Release apps` workflow.
+
 ## Quick start
 
 ### Backend (fully runnable & tested here)

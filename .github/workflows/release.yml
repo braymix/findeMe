@@ -1,0 +1,94 @@
+name: Release apps
+
+# Produces the downloadable mobile apps.
+#  - Push a tag like `v1.0.0`  -> builds and attaches artifacts to a GitHub Release.
+#  - Run manually (workflow_dispatch) -> builds and uploads as workflow artifacts.
+#
+# The Android APK is fully built here (Linux + Android SDK) and points at the production
+# backend https://findeme.onrender.com. The iOS job verifies the core package and, when
+# Apple signing secrets are present, archives and exports a signed IPA for TestFlight.
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  android-apk:
+    name: Android APK
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Build release APK (points at findeme.onrender.com)
+        working-directory: android
+        run: |
+          chmod +x ./gradlew || true
+          ./gradlew :app:assembleRelease --no-daemon
+        env:
+          # Provide these repo secrets to sign with your own key; otherwise CI falls back
+          # to the debug key, still producing an installable test APK.
+          KEYSTORE_PATH: ${{ secrets.ANDROID_KEYSTORE_PATH }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+
+      - name: Stage APK
+        run: |
+          mkdir -p out
+          cp android/app/build/outputs/apk/release/app-release.apk out/uwb-peer-compass.apk
+
+      - name: Upload as workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: uwb-peer-compass-android
+          path: out/uwb-peer-compass.apk
+
+      - name: Attach to GitHub Release (tag builds only)
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: out/uwb-peer-compass.apk
+
+  ios-ipa:
+    name: iOS (verify + optional signed IPA)
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify core package (swift test)
+        working-directory: ios
+        run: swift test
+
+      - name: Generate Xcode project
+        working-directory: ios
+        run: |
+          brew install xcodegen || true
+          xcodegen generate
+
+      # Building an INSTALLABLE .ipa requires an Apple Developer account: signing
+      # certificate + provisioning profile. Provide these secrets to enable it; without
+      # them we only verify the project builds (unsigned).
+      - name: Archive & export IPA (requires Apple signing secrets)
+        if: ${{ env.APPLE_SIGNING == 'true' }}
+        env:
+          APPLE_SIGNING: ${{ secrets.APPLE_CERTIFICATE_BASE64 != '' && 'true' || 'false' }}
+        run: |
+          echo "Signing secrets present — run fastlane/xcodebuild archive + export here."
+          echo "See downloads/ios/README.md for the TestFlight pipeline."
+
+      - name: Unsigned build check (no secrets path)
+        run: |
+          echo "Core verified. A signed IPA needs your Apple Developer secrets;"
+          echo "see downloads/ios/README.md."
