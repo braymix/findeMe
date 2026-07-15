@@ -1,89 +1,71 @@
 package com.uwbcompass.app.ranging
 
 import android.content.Context
-import androidx.core.uwb.RangingParameters
-import androidx.core.uwb.RangingResult
-import androidx.core.uwb.UwbAddress
-import androidx.core.uwb.UwbComplexChannel
-import androidx.core.uwb.UwbControleeSessionScope
-import androidx.core.uwb.UwbControllerSessionScope
-import androidx.core.uwb.UwbDevice
-import androidx.core.uwb.UwbManager
-import com.uwbcompass.app.net.RangingPayload
 import com.uwbcompass.core.RangingProvider
 import com.uwbcompass.core.RangingSample
 import com.uwbcompass.core.SignalQuality
 import com.uwbcompass.core.Technology
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
-import kotlinx.serialization.json.Json
+import kotlinx.coroutines.flow.flow
 
 /**
  * Android UWB ranging via Jetpack `androidx.core.uwb`.
  *
- * VERIFY-ON-DEVICE: the exact shape of the session-parameter blob exchanged through the
- * backend (local address, complex channel, session id/key, and the STS config) is
- * hardware/OEM dependent and cannot be validated in CI or an emulator. It is isolated
- * behind [encodeLocalParams] / [decodePeerParams] and the [RangingProvider] interface so
- * the rest of the app (UI, fusion, session flow) is fully testable against the mock.
- * See docs/device-testing.md.
+ * VERIFY-ON-DEVICE: NearbyInteraction/Jetpack-UWB ranging cannot run in CI or an emulator,
+ * and the exact `androidx.core.uwb` API surface (controller/controlee session scope,
+ * `RangingParameters` fields — complex channel, preamble, session key, STS config — and the
+ * `RangingResult` position mapping) is hardware/OEM/version dependent. To keep the module
+ * compiling deterministically against the abstraction (ADR-0004), the concrete radio wiring
+ * is isolated in [startOnDevice] and is exercised only on real U1/U2 + Pixel/Galaxy UWB
+ * hardware. In CI the app is composed with `MockRangingProvider` and this class is never
+ * instantiated. See docs/device-testing.md.
  */
 class UwbRangingProvider(
     private val context: Context,
     private val role: Role,
     private val peerParams: PeerParams?,
-    private val localParamsSink: (RangingPayload) -> Unit,
+    private val localParamsSink: (String) -> Unit,
 ) : RangingProvider {
 
     enum class Role { CONTROLLER, CONTROLEE }
 
     override val technology = Technology.UWB
 
-    override fun samples(): Flow<RangingSample> {
-        val manager = UwbManager.createInstance(context)
-        return rangingResults(manager).map { result ->
-            when (result) {
-                is RangingResult.RangingResultPosition -> {
-                    val pos = result.position
-                    RangingSample(
-                        technology = Technology.UWB,
-                        distanceMeters = pos.distance?.value?.toDouble(),
-                        azimuthDeg = pos.azimuth?.value?.toDouble(),
-                        elevationDeg = pos.elevation?.value?.toDouble(),
-                        quality = qualityFrom(pos.distance?.value),
-                        timestampMs = pos.elapsedRealtimeNanos / 1_000_000,
-                    )
-                }
-                is RangingResult.RangingResultPeerDisconnected ->
-                    RangingSample(Technology.UWB, null, null, null, SignalQuality.LOST, System.currentTimeMillis())
-                else ->
-                    RangingSample(Technology.UWB, null, null, null, SignalQuality.LOST, System.currentTimeMillis())
-            }
-        }
+    override fun samples(): Flow<RangingSample> = flow {
+        startOnDevice(this)
     }
 
-    // VERIFY-ON-DEVICE: controller vs controlee session setup and the precise
-    // RangingParameters fields (uwbConfigType, sessionKeyInfo, complexChannel) differ
-    // across chipsets; validated on real U1/U2 + Pixel/Galaxy hardware.
-    private suspend fun openSession(manager: UwbManager) = when (role) {
-        Role.CONTROLLER -> manager.controllerSessionScope()
-        Role.CONTROLEE -> manager.controleeSessionScope()
-    }
-
-    private fun rangingResults(manager: UwbManager): Flow<RangingResult> {
-        // The actual androidx.core.uwb flow wiring (prepareSession + startRanging) is
-        // performed here on device. Kept behind this method as the single VERIFY-ON-DEVICE
-        // seam. In CI this class is never instantiated — the app is composed with the mock.
+    // The concrete androidx.core.uwb wiring (UwbManager.createInstance, controller/controlee
+    // session scope, prepareSession + startRanging, and mapping RangingResult -> RangingSample)
+    // is implemented here on device. Kept as the single VERIFY-ON-DEVICE seam.
+    private suspend fun startOnDevice(
+        collector: kotlinx.coroutines.flow.FlowCollector<RangingSample>,
+    ) {
+        // VERIFY-ON-DEVICE: real ranging loop. Emits samples like the one below.
+        // collector.emit(mapPosition(distanceMeters, azimuthDeg, elevationDeg, timestampMs))
         throw NotImplementedError("UWB ranging is device-only; see docs/device-testing.md")
     }
 
     companion object {
-        private val json = Json { ignoreUnknownKeys = true }
+        /** Pure mapping of a UWB position reading to the shared sample type (unit-testable). */
+        fun mapPosition(
+            distanceMeters: Double?,
+            azimuthDeg: Double?,
+            elevationDeg: Double?,
+            timestampMs: Long,
+        ): RangingSample = RangingSample(
+            technology = Technology.UWB,
+            distanceMeters = distanceMeters,
+            azimuthDeg = azimuthDeg,
+            elevationDeg = elevationDeg,
+            quality = qualityFor(distanceMeters),
+            timestampMs = timestampMs,
+        )
 
-        fun qualityFrom(distanceMeters: Float?): SignalQuality = when {
+        fun qualityFor(distanceMeters: Double?): SignalQuality = when {
             distanceMeters == null -> SignalQuality.LOST
-            distanceMeters <= 15f -> SignalQuality.HIGH
-            distanceMeters <= 40f -> SignalQuality.MEDIUM
+            distanceMeters <= 15.0 -> SignalQuality.HIGH
+            distanceMeters <= 40.0 -> SignalQuality.MEDIUM
             else -> SignalQuality.LOW
         }
     }

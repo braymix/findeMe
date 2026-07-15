@@ -7,9 +7,10 @@
     <uses-feature android:name="android.hardware.uwb" android:required="false" />
 
     <!-- BLE fallback (Android 12+ split permissions). ACCESS_FINE_LOCATION is still
-         required by some OEMs for BLE scanning and for the GPS last-resort mode. -->
+         required by some OEMs for BLE scanning and for the GPS last-resort mode.
+         minSdk is 31, so the neverForLocation flag is always valid (no tools:targetApi needed). -->
     <uses-permission android:name="android.permission.BLUETOOTH_SCAN"
-        android:usesPermissionFlags="neverForLocation" tools:targetApi="s" />
+        android:usesPermissionFlags="neverForLocation" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADVERTISE" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
@@ -20,12 +21,12 @@
         android:allowBackup="false"
         android:label="UWB Peer Compass"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Material3.DayNight.NoActionBar"
-        xmlns:tools="http://schemas.android.com/tools">
+        android:theme="@style/Theme.UWBPeerCompass">
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:label="UWB Peer Compass">
+            android:label="UWB Peer Compass"
+            android:theme="@style/Theme.UWBPeerCompass">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

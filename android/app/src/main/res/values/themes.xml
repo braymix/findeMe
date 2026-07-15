@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Compose provides the real (Material3) theming at runtime; the Activity only needs a
+         no-action-bar host theme. Based on a platform theme so no Material Components XML
+         dependency is required. -->
+    <style name="Theme.UWBPeerCompass" parent="@android:style/Theme.Material.Light.NoActionBar" />
+</resources>
