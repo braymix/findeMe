@@ -19,17 +19,18 @@ data class Capabilities(val uwb: Boolean, val ble: Boolean, val gps: Boolean)
 data class RangingPayload(val technology: Technology, val blob: String)
 
 // ---- Outbound (client -> server) ----
+// The `type` field on the wire is emitted by kotlinx.serialization from @SerialName via the
+// class discriminator (configured as "type" in RendezvousClient); it must NOT also be a
+// declared property or serialization throws a discriminator-collision error.
 @Serializable
 sealed interface ClientMessage {
     val v: Int
-    val type: String
 }
 
 @Serializable
 @SerialName("presence.hello")
 data class PresenceHello(
     override val v: Int = PROTOCOL_MAJOR,
-    override val type: String = "presence.hello",
     val protocolVersion: String = PROTOCOL_VERSION,
     val platform: String = "android",
     val capabilities: Capabilities,
@@ -39,14 +40,12 @@ data class PresenceHello(
 @SerialName("presence.heartbeat")
 data class PresenceHeartbeat(
     override val v: Int = PROTOCOL_MAJOR,
-    override val type: String = "presence.heartbeat",
 ) : ClientMessage
 
 @Serializable
 @SerialName("session.invite")
 data class SessionInvite(
     override val v: Int = PROTOCOL_MAJOR,
-    override val type: String = "session.invite",
     val peerId: String,
 ) : ClientMessage
 
@@ -54,7 +53,6 @@ data class SessionInvite(
 @SerialName("session.accept")
 data class SessionAccept(
     override val v: Int = PROTOCOL_MAJOR,
-    override val type: String = "session.accept",
     val sessionId: String,
 ) : ClientMessage
 
@@ -62,7 +60,6 @@ data class SessionAccept(
 @SerialName("session.decline")
 data class SessionDecline(
     override val v: Int = PROTOCOL_MAJOR,
-    override val type: String = "session.decline",
     val sessionId: String,
 ) : ClientMessage
 
@@ -70,7 +67,6 @@ data class SessionDecline(
 @SerialName("session.end")
 data class SessionEnd(
     override val v: Int = PROTOCOL_MAJOR,
-    override val type: String = "session.end",
     val sessionId: String,
 ) : ClientMessage
 
@@ -78,7 +74,6 @@ data class SessionEnd(
 @SerialName("ranging.ready")
 data class RangingReady(
     override val v: Int = PROTOCOL_MAJOR,
-    override val type: String = "ranging.ready",
     val sessionId: String,
     val rangingPayload: RangingPayload,
 ) : ClientMessage
@@ -87,7 +82,6 @@ data class RangingReady(
 @SerialName("technology.report")
 data class TechnologyReport(
     override val v: Int = PROTOCOL_MAJOR,
-    override val type: String = "technology.report",
     val sessionId: String,
     val technology: Technology,
     val reason: String,
