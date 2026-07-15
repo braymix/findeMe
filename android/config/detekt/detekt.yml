@@ -1,0 +1,21 @@
+# Detekt configuration (baseline-friendly). Teams can tighten these as the app grows.
+build:
+  maxIssues: 0
+  excludeCorrectable: false
+
+complexity:
+  LongMethod:
+    active: true
+    threshold: 80
+  TooManyFunctions:
+    active: false
+
+style:
+  MagicNumber:
+    active: false # UI code uses many literal dimensions/thresholds intentionally
+  WildcardImport:
+    active: false
+
+naming:
+  FunctionNaming:
+    active: false # @Composable functions are PascalCase by convention
