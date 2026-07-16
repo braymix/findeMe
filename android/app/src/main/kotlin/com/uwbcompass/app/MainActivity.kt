@@ -3,25 +3,43 @@ package com.uwbcompass.app
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.uwbcompass.app.ui.AddContactDialog
+import com.uwbcompass.app.ui.CompassScreen
+import com.uwbcompass.app.ui.IncomingInviteDialog
+import com.uwbcompass.app.ui.LoginScreen
+import com.uwbcompass.app.ui.PeerListScreen
+
+/** Marker implemented by AppViewModel so onStop can stop ranging without a DI graph. */
+interface CompassSessionController {
+    fun stopRanging()
+}
 
 /**
- * Single-activity Compose host. Navigation between Login → Permission rationale →
- * Peer list → Compass is driven by app state (kept intentionally small; a production app
- * would use androidx.navigation). Capability detection (UWB present?) is done at runtime
- * so non-UWB devices land straight in the BLE/GPS fallback.
- *
- * The wiring of RendezvousClient + AndroidHeadingSource + provider selection into
- * CompassViewModel happens here on device; see docs/device-testing.md for manual steps.
+ * Single-activity Compose host. Renders Login → Peer list → Compass from AppViewModel's
+ * state. Capability detection and all network wiring live in AppViewModel.
  */
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             MaterialTheme {
-                Surface {
+                Surface(modifier = Modifier.fillMaxSize()) {
                     AppRoot()
                 }
             }
@@ -31,28 +49,53 @@ class MainActivity : ComponentActivity() {
     override fun onStop() {
         super.onStop()
         // Requirement: stop ranging when the app goes to background.
-        AppState.instance?.stopRanging()
+        AppStateHolder.instance?.stopRanging()
     }
 }
 
 @Composable
-fun AppRoot() {
-    // App composition root — see the individual screens in com.uwbcompass.app.ui.
-    // Kept as a thin placeholder here so the screens/ViewModel/providers stay the unit of
-    // review; the concrete navigation graph is assembled on device.
-    com.uwbcompass.app.ui.LoginScreen(
-        error = null,
-        onLogin = { _, _ -> },
-        onRegister = { _, _, _ -> },
-    )
-}
+fun AppRoot(vm: AppViewModel = viewModel()) {
+    val state by vm.state.collectAsStateWithLifecycle()
+    var showAdd by remember { mutableStateOf(false) }
 
-/** Minimal holder so onStop can stop ranging without a full DI graph. */
-object AppState {
-    var instance: CompassSessionController? = null
-}
+    when (state.screen) {
+        Screen.LOGIN -> LoginScreen(
+            error = state.error,
+            onLogin = vm::login,
+            onRegister = vm::register,
+        )
+        Screen.PEERS -> PeerListScreen(
+            peers = state.peers,
+            onSelect = vm::invite,
+            onAddContact = { showAdd = true },
+        )
+        Screen.COMPASS -> CompassScreen(
+            state = state.compass,
+            peerName = state.peerName,
+            onEnd = vm::endSession,
+        )
+    }
 
-/** Marker interface implemented by the on-device session controller. */
-interface CompassSessionController {
-    fun stopRanging()
+    // Overlays.
+    if (showAdd) {
+        AddContactDialog(
+            onAdd = {
+                vm.addContact(it)
+                showAdd = false
+            },
+            onDismiss = { showAdd = false },
+        )
+    }
+    state.incoming?.let { inc ->
+        IncomingInviteDialog(
+            fromUsername = inc.fromUsername,
+            onAccept = vm::acceptIncoming,
+            onDecline = vm::declineIncoming,
+        )
+    }
+    if (state.loading) {
+        Box(modifier = Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator()
+        }
+    }
 }
