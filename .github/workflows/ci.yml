@@ -48,9 +48,9 @@ jobs:
       - name: Ktlint + Detekt
         working-directory: android
         run: gradle ktlintCheck detekt --no-daemon || true
-      - name: Assemble + unit tests
+      - name: Unit tests + assemble debug & release APK
         working-directory: android
-        run: gradle assembleDebug testDebugUnitTest --no-daemon
+        run: gradle testDebugUnitTest assembleDebug :app:assembleRelease --no-daemon
 
   ios:
     name: iOS (lint + build, macOS)

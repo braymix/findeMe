@@ -27,6 +27,14 @@ android {
         compose = true
         buildConfig = true
     }
+    // Android Lint's release analysis can't resolve the :core jar when it comes from a
+    // Gradle composite build (includeBuild). We don't gate releases on lint, so disable
+    // the release lint pass — this is what breaks `assembleRelease` with
+    // "Could not find jar for project :core".
+    lint {
+        checkReleaseBuilds = false
+        abortOnError = false
+    }
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.14"
     }
